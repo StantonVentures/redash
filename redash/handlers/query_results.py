@@ -199,6 +199,9 @@ class QueryResultResource(BaseResource):
                 if query.query_hash != query_result.query_hash:
                     abort(404, message='No cached result found for this query.')
 
+        if len(settings.ACCESS_CONTROL_ALLOW_ORIGIN) > 0:
+            self.add_cors_headers(response.headers)
+
         if query_result:
             require_access(query_result.data_source.groups, self.current_user, view_only)
 
@@ -229,9 +232,6 @@ class QueryResultResource(BaseResource):
                 response = self.make_excel_response(query_result)
             else:
                 response = self.make_csv_response(query_result)
-
-            if len(settings.ACCESS_CONTROL_ALLOW_ORIGIN) > 0:
-                self.add_cors_headers(response.headers)
 
             if should_cache:
                 response.headers.add_header('Cache-Control', 'private,max-age=%d' % ONE_YEAR)
