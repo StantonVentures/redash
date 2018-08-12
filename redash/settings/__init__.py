@@ -157,6 +157,7 @@ default_query_runners = [
     'redash.query_runner.impala_ds',
     'redash.query_runner.vertica',
     'redash.query_runner.clickhouse',
+    'redash.query_runner.yandex_metrika',
     'redash.query_runner.treasuredata',
     'redash.query_runner.sqlite',
     'redash.query_runner.dynamodb_sql',
@@ -186,6 +187,7 @@ default_destinations = [
     'redash.destinations.webhook',
     'redash.destinations.hipchat',
     'redash.destinations.mattermost',
+    'redash.destinations.chatwork',
 ]
 
 enabled_destinations = array_from_string(os.environ.get("REDASH_ENABLED_DESTINATIONS", ",".join(default_destinations)))

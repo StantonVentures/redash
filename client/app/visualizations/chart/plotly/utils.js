@@ -1,8 +1,9 @@
 import {
-  isArray, isNumber, isString, isUndefined, contains, min, max, has, find,
-  each, values, sortBy, pluck, identity, filter, map, extend, reduce,
-} from 'underscore';
+  isArray, isNumber, isString, isUndefined, includes, min, max, has, find,
+  each, values, sortBy, identity, filter, map, extend, reduce,
+} from 'lodash';
 import moment from 'moment';
+import d3 from 'd3';
 import { createFormatter, formatSimpleTemplate } from '@/lib/value-format';
 
 // The following colors will be used if you pick "Automatic" color.
@@ -177,7 +178,7 @@ function calculateDimensions(series, options) {
   const xPadding = 0.02;
   const yPadding = 0.1;
 
-  const hasX = contains(values(options.columnMapping), 'x');
+  const hasX = includes(values(options.columnMapping), 'x');
   const hasY2 = !!find(series, (serie) => {
     const seriesOptions = options.seriesOptions[serie.name] || { type: options.globalSeriesType };
     return (seriesOptions.yAxis === 1) && (
@@ -227,6 +228,15 @@ function preparePieData(seriesList, options) {
 
   const hoverinfo = getPieHoverInfoPattern(options);
 
+  // we will use this to assign colors for values that have not explicitly set color
+  const getDefaultColor = d3.scale.ordinal().domain([]).range(ColorPaletteArray);
+  const valuesColors = {};
+  each(options.valuesOptions, (item, key) => {
+    if (isString(item.color) && (item.color !== '')) {
+      valuesColors[key] = item.color;
+    }
+  });
+
   return map(seriesList, (serie, index) => {
     const xPosition = (index % cellsInRow) * cellWidth;
     const yPosition = Math.floor(index / cellsInRow) * cellHeight;
@@ -251,11 +261,13 @@ function preparePieData(seriesList, options) {
     });
 
     return {
-      values: pluck(serie.data, 'y'),
+      values: map(serie.data, i => i.y),
       labels: map(serie.data, row => (hasX ? normalizeValue(row.x) : `Slice ${index}`)),
       type: 'pie',
       hole: 0.4,
-      marker: { colors: ColorPaletteArray },
+      marker: {
+        colors: map(serie.data, row => valuesColors[row.x] || getDefaultColor(row.x)),
+      },
       hoverinfo,
       text: [],
       textinfo: options.showDataLabels ? 'percent' : 'none',
@@ -356,7 +368,7 @@ function prepareChartData(seriesList, options) {
 
     if (seriesOptions.type === 'bubble') {
       plotlySeries.marker = {
-        size: pluck(data, 'size'),
+        size: map(data, i => i.size),
       };
     } else if (seriesOptions.type === 'box') {
       plotlySeries.boxpoints = 'outliers';
